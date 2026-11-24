@@ -1,0 +1,3 @@
+# Local Apache Spark (needs Java 17+) to run the dbt models on Spark without a Databricks account.
+-r requirements-databricks.txt
+pyspark==4.0.1

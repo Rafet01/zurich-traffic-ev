@@ -1,0 +1,5 @@
+region_code,region_name,canton,plz2,is_national
+kanton_zh,Canton of Zurich,ZH,,false
+kanton_zg,Canton of Zug,ZG,,false
+stadt_zh,City of Zurich (postcodes 80xx),ZH,80,false
+schweiz,Switzerland,,,true

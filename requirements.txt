@@ -1,0 +1,6 @@
+# Pinned for reproducible builds (CI, Docker). Upgrade deliberately.
+dbt-core==1.12.7
+dbt-duckdb==1.11.1
+duckdb==2.0.1
+pyarrow==26.0.1
+pytest==9.2.0

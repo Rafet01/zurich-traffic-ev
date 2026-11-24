@@ -1,0 +1,22 @@
+.venv/
+data/*
+!data/.gitkeep
+transform/target/
+transform/logs/
+transform/dbt_packages/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+transform/.user.yml
+.env
+orchestration/airflow-home/
+metastore_db/
+spark-warehouse/
+transform/metastore_db/
+transform/spark-warehouse/
+transform/derby.log
+derby.log
+# personal notes, kept out of the repository
+worklog.md
+tests/fixtures/

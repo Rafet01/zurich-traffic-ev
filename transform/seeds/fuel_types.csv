@@ -1,0 +1,12 @@
+fuel_code,fuel_name_de,powertrain,is_battery_electric,is_plug_in,is_electrified
+B,Benzin,petrol,false,false,false
+D,Diesel,diesel,false,false,false
+E,Elektrisch,battery_electric,true,true,true
+R,Elektrisch mit RE (Range Extender),range_extender,false,true,true
+C,Benzin / Elektrisch,hybrid,false,false,true
+F,Diesel / Elektrisch,hybrid,false,false,true
+N,Erdgas (CNG),gas,false,false,false
+Y,Erdgas (CNG) / Benzin,gas,false,false,false
+Z,Flüssiggas (LPG) / Benzin,gas,false,false,false
+K,Benzin / Alkohol (Ethanol),other,false,false,false
+M,Methanol,other,false,false,false
