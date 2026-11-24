@@ -1,0 +1,15 @@
+# Local Airflow for development: `docker compose up`, then open http://localhost:8080
+# (the admin password is printed in the logs and written to ./orchestration/airflow-home/).
+services:
+  airflow:
+    build: .
+    command: airflow standalone
+    ports: ["8080:8080"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      AIRFLOW_HOME: /opt/project/orchestration/airflow-home
+      DBT_TARGET: ${DBT_TARGET:-dev}
+    volumes:
+      - ./:/opt/project

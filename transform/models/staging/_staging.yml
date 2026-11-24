@@ -73,5 +73,6 @@ models:
           - accepted_values:
               arguments:
                 values: [false]
+                quote: false
               config:
                 severity: warn

@@ -1,0 +1,61 @@
+name: ci
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements-dev.txt
+      - run: make lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements-dev.txt
+      - run: make test
+      - run: make demo
+
+  spark:
+    # Same dbt models on local Apache Spark: the SQL dialect Databricks runs.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements-spark.txt
+      - run: |
+          make fixtures
+          python ingest/traffic.py tests/fixtures/traffic/*.csv
+          python ingest/vehicle_stock.py tests/fixtures/vehicle_stock/*.txt
+          make build-spark
+
+  airflow-docker:
+    # Builds the production image and runs all three DAGs inside it on the synthetic files.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python tests/make_fixtures.py tests/fixtures
+      - run: docker build -t zurich-traffic-ev:ci .
+      - run: |
+          mkdir -p data && chmod -R a+rwX .
+          docker run --rm -w /opt/project -v "$PWD:/opt/project" -e AIRFLOW_HOME=/tmp/af --entrypoint bash zurich-traffic-ev:ci -c '
+            set -euo pipefail
+            pip check
+            python -c "from airflow.dag_processing.dagbag import DagBag; b = DagBag(\"orchestration/dags\"); assert not b.import_errors, b.import_errors; print(sorted(b.dag_ids))"
+            airflow db migrate > /dev/null
+            T=/opt/project/tests/fixtures
+            airflow dags test traffic_counts_daily -c "{\"sources\": [\"$T/traffic/sid_dav_verkehrszaehlung_miv_OD2031_2025.csv\", \"$T/traffic/sid_dav_verkehrszaehlung_miv_OD2031_2026.csv\"]}" | tee /tmp/traffic.log
+            airflow dags test vehicle_stock_monthly -c "{\"sources\": [\"$T/vehicle_stock/BEST-20190701.txt\", \"$T/vehicle_stock/BEST-20220701.txt\", \"$T/vehicle_stock/BEST-20230101.txt\", \"$T/vehicle_stock/best_ogd.txt\"]}" | tee /tmp/stock.log
+            airflow dags test warehouse_build | tee /tmp/build.log
+            for f in /tmp/traffic.log /tmp/stock.log /tmp/build.log; do ! grep -q "new_state=failed" $f; done
+            grep -q "ERROR=0" /tmp/build.log'
