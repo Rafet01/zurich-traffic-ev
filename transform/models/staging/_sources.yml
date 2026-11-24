@@ -1,0 +1,31 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: >
+      Raw landed data. Every row carries _source_file, _source_sha256 and _source_row_number, so it can be
+      traced to one exact line of one exact downloaded file. DuckDB reads the landed Parquet files directly
+      (meta.external_location); Databricks reads Delta tables filled by load/databricks_load.py; local Spark
+      reads views registered by the register_local_bronze() hook.
+    schema: bronze
+    tables:
+      - name: traffic_counts_landing
+        description: >
+          City of Zurich motor traffic counts, one row per measuring point and hour, all columns as raw strings.
+          https://data.stadt-zuerich.ch/dataset/sid_dav_verkehrszaehlung_miv_od2031
+        meta:
+          external_location: "read_parquet('{{ var(\"traffic_landing_glob\") }}', hive_partitioning = false, union_by_name = true)"
+      - name: vehicle_stock_landing
+        description: >
+          ASTRA vehicle stock snapshots, one row per registered vehicle, passenger cars in the focus cantons only,
+          canonical columns (see ingest/vehicle_layouts.py), raw string values.
+        meta:
+          external_location: "read_parquet('{{ var(\"vehicle_stock_landing_glob\") }}', hive_partitioning = false, union_by_name = true)"
+      - name: vehicle_stock_totals_landing
+        description: Control totals written in the same pass as the rows, for ALL rows of each file (all cantons, all vehicle types).
+        meta:
+          external_location: "read_parquet('{{ var(\"vehicle_stock_totals_glob\") }}', hive_partitioning = false, union_by_name = true)"
+      - name: ingest_manifest
+        description: Append-only ingest log, one line per attempt (dataset, file, sha256, layout, rows read/kept/rejected, status).
+        meta:
+          external_location: "read_json('{{ var(\"manifest_path\") }}', format = 'newline_delimited')"

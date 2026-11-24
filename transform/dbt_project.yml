@@ -1,0 +1,60 @@
+name: zurich_traffic_ev
+version: "0.1.0"
+config-version: 2
+profile: zurich_traffic_ev
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+# Local Spark only: expose the landed files as bronze views (on Databricks, bronze holds real
+# Delta tables filled by load/databricks_load.py; on DuckDB the sources read the files directly).
+on-run-start:
+  - "{{ register_local_bronze() }}"
+
+vars:
+  # Paths are relative to the transform/ directory.
+  traffic_landing_glob: "../data/landing/traffic_counts/*/*.parquet"
+  vehicle_stock_landing_glob: "../data/landing/vehicle_stock/*/*.parquet"
+  vehicle_stock_totals_glob: "../data/landing/vehicle_stock_totals/*/*.parquet"
+  manifest_path: "../data/manifest.jsonl"
+  # Rush hours on working days, local time, [start, end) in whole hours.
+  am_peak_start_hour: 6
+  am_peak_end_hour: 9
+  pm_peak_start_hour: 16
+  pm_peak_end_hour: 19
+  # Postcode-based regions (City of Zurich = 80xx) are only reported for snapshots in which at least
+  # this share of cars in the canton carries a two-digit postcode (the July 2022 file has only one digit).
+  min_plz2_coverage: 0.95
+  # ASTRA vehicle type code of passenger cars ("Personenwagen").
+  passenger_car_type_code: "001"
+
+# Medallion layout: bronze = raw landed data (sources), silver = cleaned/conformed, gold = marts.
+models:
+  zurich_traffic_ev:
+    staging:
+      +schema: silver
+      +materialized: view
+    intermediate:
+      +schema: silver
+      +materialized: table
+    marts:
+      +schema: gold
+      +materialized: table
+
+seeds:
+  zurich_traffic_ev:
+    +schema: silver
+    regions:
+      +column_types:
+        region_code: "{{ 'string' if target.type in ('spark', 'databricks') else 'varchar' }}"
+        canton: "{{ 'string' if target.type in ('spark', 'databricks') else 'varchar' }}"
+        plz2: "{{ 'string' if target.type in ('spark', 'databricks') else 'varchar' }}"
+        is_national: boolean
+    fuel_types:
+      +column_types:
+        fuel_code: "{{ 'string' if target.type in ('spark', 'databricks') else 'varchar' }}"
+    zurich_public_holidays:
+      +column_types:
+        holiday_date: date

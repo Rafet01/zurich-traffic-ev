@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: stg_ingest__manifest
+    description: Ingest log of both datasets. is_current_version marks the newest loaded file per dataset and partition.
+    columns:
+      - name: dataset
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['traffic_counts', 'vehicle_stock']
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['loaded', 'skipped_duplicate', 'skipped_unchanged', 'failed_schema']
+
+  - name: stg_traffic__hourly_counts
+    description: Typed hourly counts per measuring point; current file version per year only.
+    columns:
+      - name: traffic_count_id
+        description: "<file sha256>:<row number in source file>. Unique and traceable to the raw CSV line."
+        data_tests: [unique, not_null]
+      - name: measuring_point_id
+        data_tests: [not_null]
+      - name: hour_start_local
+        data_tests: [not_null]
+      - name: count_status
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['measured', 'imputed', 'missing']
+      - name: direction_group
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['inbound', 'outbound', 'named']
+
+  - name: stg_vehicle_stock__cars
+    description: Registered passenger cars in the focus cantons, one row per car and stock date.
+    columns:
+      - name: vehicle_record_id
+        data_tests: [unique, not_null]
+      - name: stock_date
+        data_tests: [not_null]
+      - name: canton
+        data_tests: [not_null]
+      - name: vehicle_type_code
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["{{ var('passenger_car_type_code') }}"]
+      - name: registration_status_code
+        description: "I = in circulation. Other codes would mean the file definition changed."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['I']
+              config:
+                severity: warn
+
+  - name: stg_vehicle_stock__totals
+    description: Control totals per snapshot, canton, vehicle type and fuel, covering every row of the source file.
+    columns:
+      - name: stock_date
+        data_tests: [not_null]
+      - name: vehicle_count
+        data_tests: [not_null]
+      - name: is_unmapped_fuel_code
+        description: A fuel code that is not in seeds/fuel_types.csv yet. It is counted as 'other'.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [false]
+              config:
+                severity: warn

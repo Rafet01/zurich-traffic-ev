@@ -1,0 +1,27 @@
+zurich_traffic_ev:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+  outputs:
+    # Local: DuckDB file, no server, no account.
+    dev:
+      type: duckdb
+      path: "../data/warehouse.duckdb"
+      threads: 4
+
+    # Local Apache Spark in this process (pyspark). Same SQL dialect as Databricks,
+    # used in CI to prove the models run on Spark without a Databricks account.
+    spark:
+      type: spark
+      method: session
+      host: localhost
+      schema: silver
+      threads: 1
+
+    # Databricks (Unity Catalog, SQL warehouse). Credentials only via environment variables.
+    databricks:
+      type: databricks
+      host: "{{ env_var('DATABRICKS_HOST', '') }}"
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH', '') }}"
+      token: "{{ env_var('DATABRICKS_TOKEN', '') }}"
+      catalog: "{{ env_var('DATABRICKS_CATALOG', 'workspace') }}"
+      schema: silver
+      threads: 4

@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: dim_measuring_points
+    description: One row per traffic measuring point with its latest attributes and data coverage.
+    columns:
+      - name: measuring_point_id
+        data_tests: [unique, not_null]
+
+  - name: mart_peak_hours
+    description: >
+      When is traffic heaviest? Average vehicles per measuring point per hour of the day, by direction
+      (inbound / outbound / towards a named place) and day type (weekday, saturday, sunday, holiday).
+      Complete days only.
+    columns:
+      - name: day_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['weekday', 'saturday', 'sunday', 'holiday']
+      - name: hour_of_day
+        data_tests: [not_null]
+
+  - name: mart_busiest_sites_at_peak
+    description: Where is rush-hour traffic heaviest? Working days only, ranked by morning and evening peak volume.
+    columns:
+      - name: measuring_point_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_measuring_points')
+                field: measuring_point_id
+
+  - name: mart_traffic_monthly
+    description: Average daily vehicles per measuring point per month, with the number of contributing points and data quality shares.
+    columns:
+      - name: month_start
+        data_tests: [unique, not_null]
+
+  - name: mart_ev_share_by_region
+    description: >
+      Battery-electric share of passenger cars per region and snapshot, with the change since the previous
+      snapshot. Postcode regions in snapshots with too few two-digit postcodes are kept with null shares.
+    columns:
+      - name: region_code
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('regions')
+                field: region_code
+
+  - name: mart_ev_growth_zug_vs_zurich
+    description: One row per region with first and last snapshot, BEV share at both ends and two growth measures.
+    columns:
+      - name: region_code
+        data_tests: [unique, not_null]
+
+  - name: mart_bev_share_new_cars_monthly
+    description: Battery-electric share by month of first registration, from the latest snapshot (survivors only).
+
+  - name: mart_traffic_vs_ev_monthly
+    description: >
+      Monthly traffic in the City of Zurich next to the battery-electric share of the car stock valid in that
+      month (latest snapshot on or before the month, no interpolation) and the share among cars first
+      registered in that month.
+    columns:
+      - name: month_start
+        data_tests: [unique, not_null]
+
+  - name: mart_data_quality
+    description: One row per loaded file with row counts, layout, header fingerprint and source-specific quality shares.
