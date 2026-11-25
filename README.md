@@ -9,7 +9,7 @@ An end-to-end data engineering project on two Swiss open data sources with **dif
 
 Both are streamed, fingerprinted and landed as Parquet, then modelled with **dbt** into answers.
 
-**Stack:** Python (streaming ingest, PyArrow) · Parquet · dbt · DuckDB · Apache Spark · Databricks
+**Stack:** Python (streaming ingest, PyArrow) · Parquet · dbt (data tests, unit tests, exposures) · DuckDB · Apache Spark · Databricks
 (Unity Catalog, Delta, COPY INTO) · Apache Airflow 3 (asset-driven scheduling) · Streamlit · Docker ·
 GitHub Actions · pytest · ruff · sqlfluff
 
@@ -70,6 +70,9 @@ Airflow 3:  traffic_counts_daily (07:30) ──┐
   `traffic_count_id` and `vehicle_record_id` point to one exact line in one exact file.
 * **Reconciliation.** dbt tests check that landed rows equal the manifest, that control totals add up to every
   valid row read, and that the kept cars per canton and fuel equal the totals of the same file.
+* **Unit tests in dbt** for the two pieces that are easiest to get subtly wrong, with fixed inputs and exact
+  expected rows: when a day around a DST switch counts as complete, and which snapshot each month gets in the
+  as-of join (`transform/models/_unit_tests.yml`).
 
 ## The grain problem
 

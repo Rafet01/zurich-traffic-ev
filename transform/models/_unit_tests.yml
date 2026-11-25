@@ -1,0 +1,54 @@
+version: 2
+
+# dbt unit tests: fixed inputs -> exact expected rows, for the two pieces of logic that are easiest to get
+# subtly wrong. They run in `dbt build` before the model itself, on DuckDB and on Spark.
+unit_tests:
+  - name: a_day_is_complete_when_every_existing_hour_has_a_value
+    description: >
+      Spring DST day: 23 hours are a complete day. Autumn DST day: 25. A normal day with 23 delivered hours,
+      or 24 with one missing, is incomplete.
+    model: int_traffic_point_days
+    given:
+      - input: ref('int_traffic_hourly')
+        format: csv
+        fixture: traffic_hours_around_dst
+    expect:
+      rows:
+        - {local_date: 2026-03-29, hours_delivered: 23, hours_with_value: 23, hours_expected: 23, is_complete: true}
+        - {local_date: 2026-03-30, hours_delivered: 23, hours_with_value: 23, hours_expected: 24, is_complete: false}
+        - {local_date: 2026-10-25, hours_delivered: 25, hours_with_value: 25, hours_expected: 25, is_complete: true}
+        - {local_date: 2026-10-26, hours_delivered: 24, hours_with_value: 23, hours_expected: 24, is_complete: false}
+
+  - name: each_month_takes_the_latest_reliable_snapshot_on_or_before_it
+    description: >
+      As-of join: no interpolation, never a later snapshot, and an unreliable city snapshot (July 2022, one-digit
+      postcodes, share null) is skipped for the city but the canton's snapshot of the same date is used.
+    model: mart_traffic_vs_ev_monthly
+    given:
+      - input: ref('mart_traffic_monthly')
+        rows:
+          - {month_start: 2022-06-01}
+          - {month_start: 2022-07-01}
+          - {month_start: 2022-08-01}
+          - {month_start: 2023-01-01}
+      - input: ref('mart_ev_share_by_region')
+        rows:
+          - {region_code: stadt_zh, stock_date: 2022-01-01, share_battery_electric: 0.03}
+          - {region_code: stadt_zh, stock_date: 2022-07-01, share_battery_electric: null}
+          - {region_code: stadt_zh, stock_date: 2023-01-01, share_battery_electric: 0.05}
+          - {region_code: kanton_zh, stock_date: 2022-01-01, share_battery_electric: 0.02}
+          - {region_code: kanton_zh, stock_date: 2022-07-01, share_battery_electric: 0.025}
+          - {region_code: kanton_zh, stock_date: 2023-01-01, share_battery_electric: 0.04}
+          - {region_code: kanton_zg, stock_date: 2022-01-01, share_battery_electric: 0.9}
+      - input: ref('mart_bev_share_new_cars_monthly')
+        rows: []
+    expect:
+      rows:
+        - {month_start: 2022-06-01, city_stock_date: 2022-01-01, bev_share_city_of_zurich: 0.03, city_stock_age_days: 151,
+           canton_stock_date: 2022-01-01, bev_share_canton_of_zurich: 0.02}
+        - {month_start: 2022-07-01, city_stock_date: 2022-01-01, bev_share_city_of_zurich: 0.03, city_stock_age_days: 181,
+           canton_stock_date: 2022-07-01, bev_share_canton_of_zurich: 0.025}
+        - {month_start: 2022-08-01, city_stock_date: 2022-01-01, bev_share_city_of_zurich: 0.03, city_stock_age_days: 212,
+           canton_stock_date: 2022-07-01, bev_share_canton_of_zurich: 0.025}
+        - {month_start: 2023-01-01, city_stock_date: 2023-01-01, bev_share_city_of_zurich: 0.05, city_stock_age_days: 0,
+           canton_stock_date: 2023-01-01, bev_share_canton_of_zurich: 0.04}

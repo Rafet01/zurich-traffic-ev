@@ -1,0 +1,34 @@
+version: 2
+
+# Who reads the gold tables. `dbt ls --select +exposure:streamlit_dashboard` lists everything a dashboard
+# change depends on; `dbt build --select +exposure:readme_findings` rebuilds only what the README needs.
+exposures:
+  - name: streamlit_dashboard
+    label: Traffic and electric cars dashboard
+    type: dashboard
+    maturity: medium
+    url: http://localhost:8501
+    description: "`dashboard/app.py`: EV share per region and canton, rush-hour profile, map of the busiest measuring points."
+    depends_on:
+      - ref('mart_ev_share_by_region')
+      - ref('mart_ev_growth_zug_vs_zurich')
+      - ref('mart_ev_share_by_canton')
+      - ref('mart_peak_hours')
+      - ref('mart_busiest_sites_at_peak')
+      - ref('mart_data_quality')
+    owner:
+      name: Rafet01
+
+  - name: readme_findings
+    label: Findings section of the README
+    type: analysis
+    maturity: medium
+    description: "`scripts/findings.py` (`python pipeline.py findings --write`) writes the answers into README.md."
+    depends_on:
+      - ref('mart_data_quality')
+      - ref('mart_peak_hours')
+      - ref('mart_busiest_sites_at_peak')
+      - ref('mart_ev_growth_zug_vs_zurich')
+      - ref('mart_ev_share_by_canton')
+    owner:
+      name: Rafet01
