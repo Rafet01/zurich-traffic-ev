@@ -1,6 +1,6 @@
 """How fast is the streaming ingest? Generates large synthetic files in the real layouts and times both ingests.
 
-    python scripts/benchmark_ingest.py --out /tmp/bench                # defaults: one traffic year, 2M vehicles
+    python pipeline.py benchmark                                      # defaults: one traffic year, 2M vehicles
     python scripts/benchmark_ingest.py --out /tmp/bench --vehicle-rows 6000000
 
 Traffic: 217 measuring points x 365 days x 24 hours (about one real yearly file). Vehicle stock: the current
@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import argparse
 import random
-import resource
 import subprocess
 import sys
 import time
@@ -60,18 +59,28 @@ def vehicle_file(path: Path, rows: int) -> Path:
     return path
 
 
+def _peak_memory_mb() -> float | None:
+    try:
+        import resource  # Unix only
+    except ImportError:
+        return None
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return rss / 1024 / 1024 if sys.platform == "darwin" else rss / 1024  # bytes on macOS, KiB on Linux
+
+
 def run(label: str, src: Path, fn) -> dict:
     t0 = time.perf_counter()
     entry = fn()
     seconds = time.perf_counter() - t0
-    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024  # KiB on Linux
+    peak = _peak_memory_mb()
     mb = src.stat().st_size / 1e6
     landed = sum(p.stat().st_size for p in Path(entry.output_path).parent.glob("*.parquet")) / 1e6
     r = dict(file=label, mb=mb, rows=entry.rows_read, kept=entry.rows_kept, seconds=seconds, landed_mb=landed)
     print(
         f"{label:14} {mb:8.0f} MB  {entry.rows_read:>10,} rows  {seconds:6.1f} s  "
         f"{mb / seconds:6.1f} MB/s  {entry.rows_read / seconds:>9,.0f} rows/s  "
-        f"kept {entry.rows_kept:,} -> {landed:.0f} MB Parquet  peak memory {peak:.0f} MB"
+        f"kept {entry.rows_kept:,} -> {landed:.0f} MB Parquet  peak memory "
+        + (f"{peak:.0f} MB" if peak is not None else "n/a")
     )
     return r
 

@@ -116,11 +116,27 @@ select * from gold.mart_ev_growth_zug_vs_zurich order by rank_by_pp_per_year;
 select * from gold.mart_peak_hours where busiest_rank = 1;
 ```
 
+### On Windows (PowerShell, no `make` needed)
+
+```powershell
+py -3.12 -m venv .venv; .venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+python pipeline.py demo                    # synthetic files end to end
+python pipeline.py ingest-traffic          # real files, streamed from the portal (--dry-run lists them first)
+python pipeline.py ingest-vehicle-stock
+python pipeline.py build
+```
+
+`pipeline.py` is the one entry point for every step (the Makefile calls it too); it resolves paths from the
+repository, not the working directory, and accepts local files with Windows paths
+(`python pipeline.py ingest-vehicle-stock D:\astra\BEST-20260101.txt`). CI runs the unit tests and the demo on
+`windows-latest`. Local Spark and Airflow need Docker (or WSL) on Windows.
+
 ### Dashboard
 
 ```bash
 pip install -r requirements-dashboard.txt
-make dashboard     # Streamlit on http://localhost:8501, reads data/warehouse.duckdb read-only
+python pipeline.py dashboard     # or: make dashboard; Streamlit on http://localhost:8501, reads the warehouse read-only
 ```
 
 One view per question: battery-electric share per region over the snapshots (with the growth in percentage
@@ -155,7 +171,7 @@ make build-spark   # same models and tests, executed by Spark
 
 ## Performance
 
-`make benchmark` generates a year of traffic counts (217 measuring points x 365 days x 24 hours) and two
+`python pipeline.py benchmark` (or `make benchmark`) generates a year of traffic counts (217 measuring points x 365 days x 24 hours) and two
 million vehicle rows in the real layouts and times both ingests, each in its own process
 (4-vCPU cloud container, Python 3.13, nothing downloaded):
 

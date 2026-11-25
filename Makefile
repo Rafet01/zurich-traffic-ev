@@ -25,10 +25,10 @@ holidays:             ## regenerate the public holiday seed
 	$(PY) scripts/make_holidays.py
 
 ingest-traffic:       ## stream every yearly traffic CSV not loaded yet (+ the current year if it changed)
-	$(PY) ingest/sources.py traffic --only-new | xargs -r $(PY) ingest/traffic.py
+	$(PY) pipeline.py ingest-traffic
 
 ingest-vehicle-stock: ## stream every vehicle stock snapshot not loaded yet (~1.9 GB each, ~1 min per file)
-	$(PY) ingest/sources.py vehicle-stock --only-new | xargs -r $(PY) ingest/vehicle_stock.py
+	$(PY) pipeline.py ingest-vehicle-stock
 
 build:                ## dbt seeds, models and data tests (DBT_TARGET=dev|spark|databricks)
 	$(DBT) build --profiles-dir .
@@ -42,16 +42,14 @@ compare-engines:      ## after build + build-spark: assert both engines produced
 load-databricks:      ## upload landed Parquet to a Unity Catalog volume + COPY INTO bronze
 	$(PY) load/databricks_load.py
 
-demo: fixtures        ## end-to-end on the synthetic files
-	$(PY) ingest/traffic.py tests/fixtures/traffic/*.csv
-	$(PY) ingest/vehicle_stock.py tests/fixtures/vehicle_stock/*.txt
-	$(MAKE) build
+demo:                 ## end-to-end on the synthetic files (fixtures -> ingest -> dbt build)
+	$(PY) pipeline.py demo
 
 benchmark:            ## time both ingests on large synthetic files (~1 GB in /tmp, nothing downloaded)
-	$(PY) scripts/benchmark_ingest.py --out /tmp/zurich-traffic-ev-benchmark
+	$(PY) pipeline.py benchmark
 
 dashboard:            ## Streamlit dashboard on the gold tables (pip install -r requirements-dashboard.txt)
-	$(PY) -m streamlit run dashboard/app.py
+	$(PY) pipeline.py dashboard
 
 airflow:              ## local Airflow UI on http://localhost:8080
 	docker compose up --build

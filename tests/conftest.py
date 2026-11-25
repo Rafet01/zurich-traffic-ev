@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for p in ("ingest", "tests", "load", "scripts"):
+for p in ("", "ingest", "tests", "load", "scripts"):  # "" = repo root (pipeline.py)
     sys.path.insert(0, str(ROOT / p))
 
 

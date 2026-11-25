@@ -146,7 +146,8 @@ def header_fingerprint(header: list[str]) -> str:
 
 
 def file_name(uri: str) -> str:
-    return uri.rstrip("/").rsplit("/", 1)[-1]
+    # URLs and POSIX paths use "/", Windows paths "\\"
+    return re.split(r"[/\\]", uri.rstrip("/\\"))[-1]
 
 
 def detect_delimiter(header_line: str, candidates: str = ",;\t") -> str:
@@ -218,8 +219,11 @@ class ParquetSink:
         # Batch by batch: a traffic year keeps all ~1.9M rows, which would take over 1 GB as one Arrow table.
         idx = self.schema.get_field_index("_source_sha256")
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        with self._pq.ParquetWriter(out_path, self.schema, compression="zstd") as writer:
-            for batch in self._pq.ParquetFile(self.tmp_path).iter_batches(batch_size=self._batch_size):
+        with (
+            self._pq.ParquetFile(self.tmp_path) as source,  # closed before unlink: Windows cannot delete open files
+            self._pq.ParquetWriter(out_path, self.schema, compression="zstd") as writer,
+        ):
+            for batch in source.iter_batches(batch_size=self._batch_size):
                 sha = self._pa.array([sha256] * batch.num_rows, self._pa.string())
                 writer.write_table(self._pa.Table.from_batches([batch]).set_column(idx, "_source_sha256", sha))
         self.tmp_path.unlink()
