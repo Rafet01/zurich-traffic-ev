@@ -14,7 +14,7 @@ with shares as (
         s.battery_electric / nullif(s.cars, 0) as share_battery_electric,
         s.electrified / nullif(s.cars, 0)      as share_electrified
     from {{ ref('int_vehicle_stock_by_region') }} as s
-    inner join {{ ref('regions') }} as r on s.region_code = r.region_code
+    inner join {{ ref('stg_seed__regions') }} as r on s.region_code = r.region_code
 ),
 
 previous as (

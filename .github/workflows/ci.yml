@@ -36,6 +36,10 @@ jobs:
           python ingest/traffic.py tests/fixtures/traffic/*.csv
           python ingest/vehicle_stock.py tests/fixtures/vehicle_stock/*.txt
           make build-spark
+      - name: Same gold tables on DuckDB and Spark
+        run: |
+          make build
+          cd transform && python ../scripts/compare_engines.py
 
   airflow-docker:
     # Builds the production image and runs all three DAGs inside it on the synthetic files.

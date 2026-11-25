@@ -3,7 +3,7 @@ DATA_DIR ?= $(CURDIR)/data
 export DATA_DIR
 DBT = cd transform && dbt
 
-.PHONY: setup setup-spark lint test fixtures holidays ingest-traffic ingest-vehicle-stock build build-spark demo load-databricks airflow
+.PHONY: setup setup-spark lint test fixtures holidays ingest-traffic ingest-vehicle-stock build build-spark compare-engines demo load-databricks airflow
 
 setup:                ## install pipeline + dev tools (DuckDB)
 	$(PY) -m pip install -r requirements-dev.txt
@@ -35,6 +35,9 @@ build:                ## dbt seeds, models and data tests (DBT_TARGET=dev|spark|
 
 build-spark:          ## same models on local Apache Spark (Databricks' engine)
 	cd transform && DBT_TARGET=spark dbt build --profiles-dir .
+
+compare-engines:      ## after build + build-spark: assert both engines produced identical gold tables
+	cd transform && $(PY) ../scripts/compare_engines.py
 
 load-databricks:      ## upload landed Parquet to a Unity Catalog volume + COPY INTO bronze
 	$(PY) load/databricks_load.py

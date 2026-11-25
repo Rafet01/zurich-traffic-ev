@@ -9,7 +9,7 @@ with region_cantons as (
         sum(case when t.is_battery_electric then t.vehicle_count else 0 end) as battery_electric,
         sum(case when t.is_electrified then t.vehicle_count else 0 end)    as electrified
     from {{ ref('stg_vehicle_stock__totals') }} as t
-    inner join {{ ref('regions') }} as r
+    inner join {{ ref('stg_seed__regions') }} as r
         on
             r.plz2 is null
             and ((not r.is_national and t.canton = r.canton) or (r.is_national and t.is_swiss_canton))
@@ -35,7 +35,7 @@ region_postcodes as (
         count_if(c.is_battery_electric)   as battery_electric,
         count_if(c.is_electrified)        as electrified
     from {{ ref('stg_vehicle_stock__cars') }} as c
-    inner join {{ ref('regions') }} as r
+    inner join {{ ref('stg_seed__regions') }} as r
         on r.plz2 is not null and c.canton = r.canton and c.plz2 = r.plz2
     group by all
 )
@@ -60,6 +60,6 @@ select
     coalesce(p.electrified, 0)                                   as electrified,
     cast(cov.plz2_coverage as double)                            as plz2_coverage,
     cov.plz2_coverage >= {{ var('min_plz2_coverage') }}          as is_reliable
-from {{ ref('regions') }} as r
+from {{ ref('stg_seed__regions') }} as r
 inner join plz_coverage as cov on r.plz2 is not null and r.canton = cov.canton
 left join region_postcodes as p on r.region_code = p.region_code and cov.stock_date = p.stock_date

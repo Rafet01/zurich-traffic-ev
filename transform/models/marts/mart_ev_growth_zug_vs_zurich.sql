@@ -30,7 +30,7 @@ measured as (
         l.share_battery_electric                                       as last_share,
         f.battery_electric                                             as first_battery_electric,
         l.battery_electric                                             as last_battery_electric,
-        {{ dbt.datediff('e.first_stock_date', 'e.last_stock_date', 'month') }} / 12.0 as years
+        ({{ dbt.datediff('e.first_stock_date', 'e.last_stock_date', 'month') }}) / 12.0 as years
     from ends as e
     inner join reliable as f on e.region_code = f.region_code and e.first_stock_date = f.stock_date
     inner join reliable as l on e.region_code = l.region_code and e.last_stock_date = l.stock_date

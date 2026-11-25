@@ -20,7 +20,7 @@ totals as (
     where
         vehicle_type_code = '{{ var("passenger_car_type_code") }}'
         and canton in (
-            select r.canton from {{ ref('regions') }} as r
+            select r.canton from {{ ref('stg_seed__regions') }} as r
             where r.canton is not null
         )
     group by all

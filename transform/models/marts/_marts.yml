@@ -48,7 +48,7 @@ models:
         data_tests:
           - relationships:
               arguments:
-                to: ref('regions')
+                to: ref('stg_seed__regions')
                 field: region_code
 
   - name: mart_ev_growth_zug_vs_zurich

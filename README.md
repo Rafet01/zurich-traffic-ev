@@ -21,6 +21,10 @@ One dbt project, three engines, same results:
 | `spark` | Apache Spark in-process (pyspark), the engine Databricks runs on | no (Java 17+) |
 | `databricks` | Databricks SQL warehouse, Unity Catalog, Delta tables | yes (Free Edition is enough) |
 
+CI builds every model on DuckDB and on Spark and then compares all gold tables row by row
+(`scripts/compare_engines.py`). That check already caught two engine differences the tests did not:
+dbt-spark loads an empty seed cell as the string `'None'`, and a cross-database `datediff` needed parentheses.
+
 ## Questions
 
 1. **Where and when** is rush-hour traffic in Zurich heaviest? (`gold.mart_peak_hours`, `gold.mart_busiest_sites_at_peak`)

@@ -24,6 +24,6 @@ select
     count_if(c.is_battery_electric)                             as battery_electric,
     round(count_if(c.is_battery_electric) / count(*), 4)        as share_battery_electric
 from cars as c
-inner join {{ ref('regions') }} as r
+inner join {{ ref('stg_seed__regions') }} as r
     on not r.is_national and c.canton = r.canton and (r.plz2 is null or c.plz2 = r.plz2)
 group by all

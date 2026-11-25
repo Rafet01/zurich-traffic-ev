@@ -76,3 +76,9 @@ models:
                 quote: false
               config:
                 severity: warn
+
+  - name: stg_seed__regions
+    description: Regions of the EV comparison. plz2 set = postcode region (from vehicle rows), else canton or national (from control totals).
+    columns:
+      - name: region_code
+        data_tests: [unique, not_null]
