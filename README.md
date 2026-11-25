@@ -32,6 +32,13 @@ dbt-spark loads an empty seed cell as the string `'None'`, and a cross-database 
    `gold.mart_ev_growth_zug_vs_zurich`, and all 26 cantons for context in `gold.mart_ev_share_by_canton`)
 3. How do the two fit together month by month? (`gold.mart_traffic_vs_ev_monthly`)
 
+## Findings
+
+<!-- findings:start -->
+_Pending the first full run on the real files. `python pipeline.py findings --write` fills this section from the
+gold tables (it refuses while the warehouse holds the synthetic demo data)._
+<!-- findings:end -->
+
 ## Architecture
 
 ```

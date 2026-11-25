@@ -22,6 +22,7 @@ jobs:
       - run: make demo
       - name: Benchmark script still runs (tiny sizes)
         run: python scripts/benchmark_ingest.py --out /tmp/bench --traffic-points 5 --traffic-days 7 --vehicle-rows 5000
+      - run: python pipeline.py findings
       - name: Dashboard renders on the demo warehouse
         run: |
           pip install -r requirements-dashboard.txt

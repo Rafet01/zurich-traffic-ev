@@ -205,7 +205,10 @@ def peak_section(path: str) -> None:
     data = peaks[peaks.direction_group == group].assign(day=lambda d: d.day_type.map(DAY_TYPE_LABEL))
 
     am, pm = (6, 9), (16, 19)
-    bands = pd.DataFrame({"start": [am[0], pm[0]], "end": [am[1], pm[1]], "label": ["AM peak", "PM peak"]})
+    # hours h with start <= h < end, each plotted at x = h
+    bands = pd.DataFrame(
+        {"start": [am[0] - 0.5, pm[0] - 0.5], "end": [am[1] - 0.5, pm[1] - 0.5], "label": ["AM peak", "PM peak"]}
+    )
     band_layer = (
         alt.Chart(bands)
         .mark_rect(opacity=0.08, color="gray")

@@ -6,6 +6,7 @@
     python pipeline.py build [--target spark]  dbt seeds, models and data tests
     python pipeline.py dashboard               Streamlit on http://localhost:8501
     python pipeline.py benchmark               time both ingests on large synthetic files
+    python pipeline.py findings [--write]      the answers from the gold tables, as Markdown (--write: into README)
 
 The ingest commands also take explicit files or URLs, e.g. `python pipeline.py ingest-vehicle-stock D:\\BEST.txt`,
 and `--dry-run` to only list what would be loaded. Paths are resolved from this file, not the working directory.
@@ -26,7 +27,7 @@ ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("DATA_DIR", ROOT / "data"))
 MANIFEST = DATA / "manifest.jsonl"
 FIXTURES = ROOT / "tests" / "fixtures"
-sys.path[:0] = [str(ROOT / "ingest"), str(ROOT / "tests")]
+sys.path[:0] = [str(ROOT / "ingest"), str(ROOT / "tests"), str(ROOT / "scripts")]
 
 
 def ingest_traffic(files: list[str], force: bool = False, dry_run: bool = False) -> int:
@@ -114,6 +115,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("demo")
     sub.add_parser("dashboard")
     sub.add_parser("benchmark").add_argument("--out", type=Path, default=Path(tempfile.gettempdir()) / "zte-bench")
+    sub.add_parser("findings").add_argument("--write", action="store_true", help="replace the block in README.md")
     args = p.parse_args(argv)
 
     if args.command == "ingest-traffic":
@@ -129,6 +131,13 @@ def main(argv: list[str] | None = None) -> int:
         return demo()
     if args.command == "dashboard":
         return subprocess.run([sys.executable, "-m", "streamlit", "run", str(ROOT / "dashboard" / "app.py")]).returncode
+    if args.command == "findings":
+        import findings
+
+        return findings.main(
+            ["--warehouse", str(DATA / "warehouse.duckdb"), "--manifest", str(MANIFEST)]
+            + (["--write"] if args.write else [])
+        )
     if args.command == "benchmark":
         return subprocess.run(
             [sys.executable, str(ROOT / "scripts" / "benchmark_ingest.py"), "--out", str(args.out)]
