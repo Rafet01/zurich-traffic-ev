@@ -99,6 +99,7 @@ class ManifestEntry:
     http_etag: str | None
     ingested_at: str
     status: str  # loaded | skipped_duplicate | skipped_unchanged | failed_schema
+    duration_seconds: float | None = None  # wall clock from ingested_at to the manifest write (incl. download)
     header: list[str] = field(default_factory=list)
 
 
@@ -113,6 +114,9 @@ def read_manifest(path: Path) -> list[dict]:
 
 
 def append_manifest(path: Path, entry: ManifestEntry) -> None:
+    if entry.duration_seconds is None:
+        started = datetime.fromisoformat(entry.ingested_at)
+        entry.duration_seconds = max(0.0, round((datetime.now(UTC) - started).total_seconds(), 1))
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(asdict(entry), ensure_ascii=False) + "\n")
@@ -158,7 +162,7 @@ class ParquetSink:
     """Writes kept rows (all strings) plus lineage columns in batches to a temporary Parquet file.
 
     The file hash is only known after the last byte has been read, so `_source_sha256` is filled in
-    by `finish()`, which rewrites the (already filtered, small) file to its final location.
+    by `finish()`, which rewrites the file batch by batch to its final location (memory stays flat).
     """
 
     LINEAGE = ["_source_file", "_source_sha256", "_source_row_number", "_ingested_at"]
@@ -211,11 +215,13 @@ class ParquetSink:
         self._writer.close()
 
     def finish(self, out_path: Path, sha256: str) -> None:
-        table = self._pq.read_table(self.tmp_path)
-        idx = table.schema.get_field_index("_source_sha256")
-        table = table.set_column(idx, "_source_sha256", self._pa.array([sha256] * table.num_rows, self._pa.string()))
+        # Batch by batch: a traffic year keeps all ~1.9M rows, which would take over 1 GB as one Arrow table.
+        idx = self.schema.get_field_index("_source_sha256")
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        self._pq.write_table(table, out_path, compression="zstd")
+        with self._pq.ParquetWriter(out_path, self.schema, compression="zstd") as writer:
+            for batch in self._pq.ParquetFile(self.tmp_path).iter_batches(batch_size=self._batch_size):
+                sha = self._pa.array([sha256] * batch.num_rows, self._pa.string())
+                writer.write_table(self._pa.Table.from_batches([batch]).set_column(idx, "_source_sha256", sha))
         self.tmp_path.unlink()
 
     def discard(self) -> None:

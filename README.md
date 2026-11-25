@@ -152,6 +152,23 @@ make build-spark   # same models and tests, executed by Spark
    HTTP path and token.
 3. `make load-databricks` (upload + `COPY INTO`, both idempotent) and `DBT_TARGET=databricks make build`.
 
+## Performance
+
+`make benchmark` generates a year of traffic counts (217 measuring points x 365 days x 24 hours) and two
+million vehicle rows in the real layouts and times both ingests, each in its own process
+(4-vCPU cloud container, Python 3.13, nothing downloaded):
+
+| File | Size | Rows | Time | Throughput | Kept | Peak memory |
+|---|---|---|---|---|---|---|
+| Traffic, one year | 406 MB | 1.90 M | 18 s | 23 MB/s, 105k rows/s | all rows, 10 MB Parquet | 0.4 GB |
+| Vehicle stock | 638 MB | 2.00 M | 15 s | 42 MB/s, 130k rows/s | 0.6 M cars in ZH/ZG, 4 MB Parquet | 0.3 GB |
+
+So a 1.9 GB vehicle snapshot is about 45 s of parsing and the full history (13 snapshots, 15 traffic years)
+about 15 minutes; on a connection slower than about 200-300 Mbit/s the download is the bottleneck, not the parser. Memory does not grow
+with the file. The benchmark found one place where it did: rewriting a landed file to stamp the SHA-256 read it
+into memory whole, 1.4 GB for a traffic year; it is now rewritten batch by batch. Every real run records its own
+wall-clock time in the manifest (`duration_seconds`, shown in `gold.mart_data_quality`).
+
 ## Data sources and licences
 
 * City of Zurich, Dienstabteilung Verkehr: [Daten der Verkehrszählung zum motorisierten Individualverkehr

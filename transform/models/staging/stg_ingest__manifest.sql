@@ -14,6 +14,7 @@ select
     cast(partition_key as {{ dbt.type_string() }}) as partition_key,
     partition_key_source,
     cast(ingested_at as timestamp)               as ingested_at,
+    cast(duration_seconds as double)             as duration_seconds,
     status,
     status = 'loaded'
     and row_number() over (

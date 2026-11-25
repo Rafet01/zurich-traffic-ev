@@ -39,6 +39,7 @@ MANIFEST_COLUMNS = [
     "http_etag",
     "ingested_at",
     "status",
+    "duration_seconds",
 ]
 
 # (manifest field with the local path, folder in the volume, bronze table)

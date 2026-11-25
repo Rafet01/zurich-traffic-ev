@@ -44,7 +44,7 @@ QUERIES = {
         order by rank_pm_peak""",
     "data_quality": """
         select dataset, source_file, partition_key, layout, status, is_current_version, rows_read, rows_kept,
-               rows_rejected, share_hours_measured, share_hours_missing, plz2_coverage, ingested_at
+               rows_rejected, share_hours_measured, share_hours_missing, plz2_coverage, ingested_at, ingest_seconds
         from gold.mart_data_quality
         order by dataset, partition_key""",
 }

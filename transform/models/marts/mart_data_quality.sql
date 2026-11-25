@@ -40,6 +40,8 @@ select
     m.status,
     m.is_current_version,
     m.ingested_at,
+    m.duration_seconds                  as ingest_seconds,
+    round(m.source_bytes / 1e6 / nullif(m.duration_seconds, 0), 1) as ingest_mb_per_second,
     m.source_bytes,
     m.rows_read,
     m.rows_kept,

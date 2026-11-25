@@ -15,6 +15,8 @@ def test_ingest_keeps_every_row_with_lineage(fixtures, tmp_path):
     assert e.sha256 == hashlib.sha256(src.read_bytes()).hexdigest()
     assert e.partition_key == "2026" and e.partition_key_source == "file name"
     assert e.rows_read == e.rows_kept and e.rows_rejected == 0
+    logged = json.loads((tmp_path / "manifest.jsonl").read_text().splitlines()[-1])
+    assert logged["duration_seconds"] is not None and logged["duration_seconds"] >= 0
 
     landed = pq.read_table(e.output_path).to_pylist()
     with src.open(newline="", encoding="utf-8") as f:
