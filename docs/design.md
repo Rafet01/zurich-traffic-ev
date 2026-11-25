@@ -72,4 +72,4 @@
    stream for all vehicle snapshots, a few minutes per file); check `gold.mart_data_quality`.
 2. Write the findings for both questions into the README.
 3. First run on Databricks Free Edition.
-4. Small dashboard: map of the busiest points (LV95 -> WGS84), EV share lines per region.
+4. Dashboard (`dashboard/app.py`): done on synthetic data; check it on the real data.

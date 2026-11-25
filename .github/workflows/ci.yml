@@ -20,6 +20,10 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: make test
       - run: make demo
+      - name: Dashboard renders on the demo warehouse
+        run: |
+          pip install -r requirements-dashboard.txt
+          REQUIRE_DASHBOARD=1 python -m pytest -q tests/test_dashboard.py
 
   spark:
     # Same dbt models on local Apache Spark: the SQL dialect Databricks runs.

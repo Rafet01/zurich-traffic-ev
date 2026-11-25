@@ -10,8 +10,8 @@ An end-to-end data engineering project on two Swiss open data sources with **dif
 Both are streamed, fingerprinted and landed as Parquet, then modelled with **dbt** into answers.
 
 **Stack:** Python (streaming ingest, PyArrow) · Parquet · dbt · DuckDB · Apache Spark · Databricks
-(Unity Catalog, Delta, COPY INTO) · Apache Airflow 3 (asset-driven scheduling) · Docker · GitHub Actions ·
-pytest · ruff · sqlfluff
+(Unity Catalog, Delta, COPY INTO) · Apache Airflow 3 (asset-driven scheduling) · Streamlit · Docker ·
+GitHub Actions · pytest · ruff · sqlfluff
 
 One dbt project, three engines, same results:
 
@@ -116,6 +116,18 @@ select * from gold.mart_ev_growth_zug_vs_zurich order by rank_by_pp_per_year;
 select * from gold.mart_peak_hours where busiest_rank = 1;
 ```
 
+### Dashboard
+
+```bash
+pip install -r requirements-dashboard.txt
+make dashboard     # Streamlit on http://localhost:8501, reads data/warehouse.duckdb read-only
+```
+
+Three views, one per question: battery-electric share per region over the snapshots (with the growth in
+percentage points per year as headline numbers), the average day profile per day type with the rush-hour
+windows shaded, and a map of the busiest measuring points at the morning or evening peak. Each view names the
+gold table it reads. CI runs the dashboard headlessly against the demo warehouse (`tests/test_dashboard.py`).
+
 ### With Airflow (Docker)
 
 ```bash
@@ -160,5 +172,5 @@ the fixtures are invented.
 - [x] dbt models and tests on DuckDB and Spark; Databricks loader; medallion layout
 - [x] Three Airflow DAGs wired by assets; Docker image; CI that runs the DAGs inside the image
 - [ ] First full run on the real files (15 traffic years, 13 vehicle snapshots) and findings in this README
-- [ ] Map of the busiest measuring points (LV95 -> WGS84) in a small dashboard
+- [x] Map of the busiest measuring points (LV95 -> WGS84) in a small Streamlit dashboard
 - [ ] Optional: canton-level comparison with all 26 cantons (the control totals already contain them)

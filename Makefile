@@ -3,7 +3,7 @@ DATA_DIR ?= $(CURDIR)/data
 export DATA_DIR
 DBT = cd transform && dbt
 
-.PHONY: setup setup-spark lint test fixtures holidays ingest-traffic ingest-vehicle-stock build build-spark compare-engines demo load-databricks airflow
+.PHONY: setup setup-spark lint test fixtures holidays ingest-traffic ingest-vehicle-stock build build-spark compare-engines demo load-databricks airflow dashboard
 
 setup:                ## install pipeline + dev tools (DuckDB)
 	$(PY) -m pip install -r requirements-dev.txt
@@ -46,6 +46,9 @@ demo: fixtures        ## end-to-end on the synthetic files
 	$(PY) ingest/traffic.py tests/fixtures/traffic/*.csv
 	$(PY) ingest/vehicle_stock.py tests/fixtures/vehicle_stock/*.txt
 	$(MAKE) build
+
+dashboard:            ## Streamlit dashboard on the gold tables (pip install -r requirements-dashboard.txt)
+	$(PY) -m streamlit run dashboard/app.py
 
 airflow:              ## local Airflow UI on http://localhost:8080
 	docker compose up --build
