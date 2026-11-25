@@ -4,7 +4,7 @@
 
 Traffic: two yearly CSVs (2025, 2026) with 5 measuring points, four weeks each, covering both DST
 switches, Easter holidays, a counting-site outage (Fehlend) and imputed hours.
-Vehicle stock: four snapshots in four of the six real ASTRA header layouts (verbatim headers),
+Vehicle stock: four snapshots in four of the eight real ASTRA header lines (verbatim headers),
 including the 2019 typos, the 2022-07 one-digit postcode, a quoted model name and a broken row.
 The numbers are invented; only the structure is real.
 """

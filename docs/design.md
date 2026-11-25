@@ -22,10 +22,12 @@
   returns "not authorized" through the CKAN API and the portal (2026-11-24). The record-level ASTRA files are used.
 * `https://opendata.astra.admin.ch/ivzod/1000-Fahrzeuge_IVZ/1300-Fahrzeugbestaende/1320-Datensaetze_monatlich/`:
   `best_ogd.txt` (1.8 GB, current month, new layout), `BEST.txt` (1.9 GB, old layout, current month),
-  `BEST_ANDERE/ANH/MOTO.txt` (other vehicle groups) and `1323-Vorjahrsdaten/BEST-YYYYMMDD.txt` (1.6-1.9 GB each:
+  `BEST_ANDERE/ANH/MOTO.txt` (other vehicle groups) and `1323-Vorjahrsdaten/BEST-YYYYMMDD.txt` (1.7-2.1 GB each:
   2019-07, 2020-01, 2020-07, 2021-01, 2021-07, 2022-01, 2022-07, 2023-01, 2024-01, 2024-07, 2025-01, 2026-01).
 * Tab-separated, UTF-8 without BOM, CRLF. One row per vehicle in circulation (`Inverkehrsetzung_Status_Code = I`).
-* Header layouts: see `ingest/vehicle_layouts.py` (six variants, two families).
+* Header layouts: see `ingest/vehicle_layouts.py` (eight distinct header lines, two families). The weekly live
+  check (`scripts/check_sources.py`, 2026-11-25) found all 28 files (15 traffic years, 13 snapshots, 26.5 GB of
+  vehicle files in total) and resolved every header.
 * `PLZ` is masked: `80..`; in `BEST-20220701.txt` only one digit: `8...`.
 * Fuel codes seen: B Benzin, D Diesel, E Elektrisch, C Benzin/Elektrisch, F Diesel/Elektrisch,
   R Elektrisch mit Range Extender, N Erdgas, Y Erdgas/Benzin, Z LPG/Benzin, K Benzin/Ethanol, M Methanol, and blank.
@@ -70,7 +72,7 @@
 ## Work plan
 
 1. Run `python pipeline.py ingest-traffic` and `python pipeline.py ingest-vehicle-stock` on a machine that can
-   reach both portals (~25 GB to stream for all vehicle snapshots, about a minute of parsing per file, see the
+   reach both portals (~26.5 GB to stream for all vehicle snapshots, ~6.5 GB of traffic files, about a minute of parsing per file, see the
    README's Performance section); then `python pipeline.py build` and check `gold.mart_data_quality`.
 2. Write the findings for both questions into the README.
 3. First run on Databricks Free Edition.

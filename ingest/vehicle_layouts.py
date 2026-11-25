@@ -1,15 +1,17 @@
 """Known header layouts of the ASTRA vehicle stock files, mapped to one set of canonical columns.
 
 The files on https://opendata.astra.admin.ch/ivzod/ (1000-Fahrzeuge_IVZ/1300-Fahrzeugbestaende/) are
-tab-separated, UTF-8, one row per registered vehicle, no holder data. Six different headers were found
-between July 2019 and November 2026 (checked 2026-11-24 by reading the first bytes of every file):
+tab-separated, UTF-8, one row per registered vehicle, no holder data. Eight different header lines were found
+between July 2019 and November 2026 (first bytes of every file, 2026-11-24; confirmed by fingerprint in the
+weekly live check, scripts/check_sources.py):
 
   BEST-20190701           58 columns, typo "Erstinvekehrsetzung_Kanton", empty trailing column "V58"
   BEST-20200101..20210101 58 columns, no Hybridcode, trailing "V58"
   BEST-20210701..20220101 57 columns
   BEST-20220701           63 columns, + Hybridcode / CO2-WLTP / Datenstand; PLZ masked to ONE digit ("8...")
   BEST-20230101           64 columns, header typo "Erstinverkehrsetzung_Monat]"
-  BEST-20240101..BEST.txt 63-64 columns
+  BEST-20240101..20240701 64 columns
+  BEST-20250101..20260101 63 columns (also BEST.txt, the current month in the old format)
   best_ogd.txt            56 columns, new format since November 2026: other names, "Treibstoff" now holds
                           the fuel *code*, first registration as one date, Datenstand e.g. "31.10.2026"
 

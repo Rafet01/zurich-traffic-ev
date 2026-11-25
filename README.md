@@ -4,7 +4,7 @@ An end-to-end data engineering project on two Swiss open data sources with **dif
 
 * **Motor traffic counts of the City of Zurich**: vehicles per hour at ~200 measuring points, one CSV per year
   since 2012 (~450 MB each, the current year regenerated every morning).
-* **The ASTRA vehicle stock**: every registered vehicle in Switzerland as one row, a ~1.9 GB file per snapshot
+* **The ASTRA vehicle stock**: every registered vehicle in Switzerland as one row, a 1.7-2.1 GB file per snapshot
   (archive snapshots every 6-12 months since July 2019, plus the current month), without holder data, postcode masked to two digits.
 
 Both are streamed, fingerprinted and landed as Parquet, then modelled with **dbt** into answers.
@@ -94,7 +94,7 @@ the BEV share among cars by month of first registration (survivors only, documen
 
 | Pitfall | What goes wrong if ignored | How it's handled |
 |---|---|---|
-| **Six different headers** in the ASTRA files 2019-2026 (57-64 columns, typos `Erstinvekehrsetzung_Kanton` and `Erstinverkehrsetzung_Monat]`, trailing `V58`, a complete renaming in Nov 2026 where `Treibstoff` switches from fuel *name* to fuel *code*) | Silent misparse or a pipeline that only works on one year | Two layout families, aliases per canonical column, resolved per file, layout + header fingerprint in the manifest, unit test per real header |
+| **Eight different header lines** in the 13 ASTRA files 2019-2026 (56-64 columns, typos `Erstinvekehrsetzung_Kanton` and `Erstinverkehrsetzung_Monat]`, trailing `V58`, a complete renaming in Nov 2026 where `Treibstoff` switches from fuel *name* to fuel *code*) | Silent misparse or a pipeline that only works on one year | Two layout families, aliases per canonical column, resolved per file, layout + header fingerprint in the manifest, unit test per real header |
 | **Postcode precision changes**: `80..` in most files, `8...` (one digit) in July 2022 | City of Zurich drops to 0 cars, a fake collapse | Per-snapshot coverage of two-digit postcodes; postcode regions below 95% are kept but flagged, without numbers |
 | **Plug-in hybrids not identifiable** before mid-2022 (`Hybridcode`), then `Pluginhybrid` in the new layout | Inconsistent "EV" definition over time | Headline metric = battery-electric only (fuel code `E`), the same in every file; `is_plug_in_hybrid` is null where unknown |
 | Snapshot date: `Datenstand` `01.07.2022` vs `31.10.2026`, sometimes absent, sometimes empty on the first rows | Off-by-one-month joins | One convention (first day of the month the stock is valid for); source of the date recorded (data, file name, HTTP header, argument) |
@@ -117,7 +117,7 @@ make lint test        # ruff, sqlfluff, pytest
 make demo             # end-to-end on synthetic files in the real layouts (no download)
 
 make ingest-traffic         # all yearly CSVs not loaded yet (~450 MB each)
-make ingest-vehicle-stock   # all snapshots not loaded yet (~1.9 GB each)
+make ingest-vehicle-stock   # all snapshots not loaded yet (~2 GB each)
 make build                  # dbt seed + run + test
 ```
 
@@ -214,7 +214,7 @@ the fixtures are invented.
 ## Status and roadmap
 
 - [x] Streaming ingest for both sources with hashing, manifest, lineage and control totals
-- [x] Six real ASTRA header layouts resolved and unit-tested
+- [x] All eight real ASTRA header lines resolved (unit-tested on the verbatim headers, checked weekly against the live files)
 - [x] dbt models and tests on DuckDB and Spark; Databricks loader; medallion layout
 - [x] Three Airflow DAGs wired by assets; Docker image; CI that runs the DAGs inside the image
 - [ ] First full run on the real files (15 traffic years, 13 vehicle snapshots) and findings in this README

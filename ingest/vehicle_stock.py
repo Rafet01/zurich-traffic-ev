@@ -3,7 +3,7 @@
 Source: ASTRA open data, https://opendata.astra.admin.ch/ivzod/1000-Fahrzeuge_IVZ/1300-Fahrzeugbestaende/
   1320-Datensaetze_monatlich/best_ogd.txt               current month (new layout since Nov 2026)
   1320-Datensaetze_monatlich/1323-Vorjahrsdaten/BEST-YYYYMMDD.txt   half-yearly history since 2019
-Each file is ~1.6-1.9 GB, tab-separated, one row per vehicle, no holder data, PLZ masked to "80..".
+Each file is ~1.7-2.1 GB, tab-separated, one row per vehicle, no holder data, PLZ masked to "80..".
 
 One pass over the bytes produces:
   1. vehicle rows (canonical columns, raw strings, lineage) for the focus cantons and vehicle types,
