@@ -69,8 +69,9 @@
 
 ## Work plan
 
-1. Run `make ingest-traffic` and `make ingest-vehicle-stock` on a machine that can reach both portals (~25 GB to
-   stream for all vehicle snapshots, a few minutes per file); check `gold.mart_data_quality`.
+1. Run `python pipeline.py ingest-traffic` and `python pipeline.py ingest-vehicle-stock` on a machine that can
+   reach both portals (~25 GB to stream for all vehicle snapshots, about a minute of parsing per file, see the
+   README's Performance section); then `python pipeline.py build` and check `gold.mart_data_quality`.
 2. Write the findings for both questions into the README.
 3. First run on Databricks Free Edition.
 4. Dashboard (`dashboard/app.py`): done on synthetic data; check it on the real data.

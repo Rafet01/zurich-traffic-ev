@@ -106,14 +106,15 @@ def test_quotes_inside_values_do_not_break_parsing(tmp_path):
     v = {"canton": "ZH", "plz": "80..", "vcode": "001", "vname": "Personenwagen", "fuel": "E", "hybrid": "N/A",
          "brand": "VW", "model": '"ID.3 Pro', "first": (2023, 5), "power": "150"}  # fmt: skip
     src = tmp_path / "BEST-20250101.txt"
-    src.write_text("\t".join(header) + "\r\n" + "\t".join(fx._row(header, v, "")) + "\r\n", encoding="utf-8")
+    lines = "\t".join(header) + "\r\n" + "\t".join(fx._row(header, v, "")) + "\r\n"
+    src.write_text(lines, encoding="utf-8", newline="")  # exact bytes, also on Windows
     e = ingest(str(src), CANTONS, tmp_path / "r", tmp_path / "t", tmp_path / "m.jsonl")
     assert (e.rows_read, e.rows_kept, e.rows_rejected) == (1, 1, 0)
 
 
 def test_failed_schema_is_logged(tmp_path):
     bad = tmp_path / "BEST-20270101.txt"
-    bad.write_text("Kanton\tAnzahl\r\nZH\t5\r\n", encoding="utf-8")
+    bad.write_text("Kanton\tAnzahl\r\nZH\t5\r\n", encoding="utf-8", newline="")
     with pytest.raises(ValueError):
         ingest(str(bad), CANTONS, tmp_path / "r", tmp_path / "t", tmp_path / "m.jsonl")
     assert json.loads((tmp_path / "m.jsonl").read_text())["status"] == "failed_schema"

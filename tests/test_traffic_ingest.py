@@ -58,7 +58,7 @@ def test_reingest_same_bytes_is_noop(fixtures, tmp_path):
 
 def test_missing_column_is_rejected_and_logged(tmp_path):
     bad = tmp_path / "sid_dav_verkehrszaehlung_miv_OD2031_2027.csv"
-    bad.write_text("MSID,MessungDatZeit,AnzFahrzeuge\nZ001M001,2027-01-01T00:00:00,5\n", encoding="utf-8")
+    bad.write_text("MSID,MessungDatZeit,AnzFahrzeuge\nZ001M001,2027-01-01T00:00:00,5\n", encoding="utf-8", newline="")
     with pytest.raises(ValueError, match="missing expected columns"):
         ingest(str(bad), tmp_path / "landing", tmp_path / "manifest.jsonl")
     entry = json.loads((tmp_path / "manifest.jsonl").read_text())

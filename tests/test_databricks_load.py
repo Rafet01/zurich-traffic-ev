@@ -16,14 +16,22 @@ MANIFEST = [
 def test_only_loaded_files_are_uploaded_flat_and_never_overwritten():
     plan = build_plan(MANIFEST, Path("data/manifest.jsonl"), "workspace")
     vol = "/Volumes/workspace/bronze/landing"
+    local = lambda p: str(Path(p))  # noqa: E731  local side uses the OS separator, the volume side always "/"
     assert plan.uploads == [
-        ("data/landing/traffic_counts/year=2026/aa.parquet", f"{vol}/traffic_counts/2026_aa.parquet", False),
-        ("data/landing/vehicle_stock/stock_date=2026-11-01/bb.parquet", f"{vol}/vehicle_stock/2026-11-01_bb.parquet",
-         False),
-        ("data/landing/vehicle_stock_totals/stock_date=2026-11-01/bb.parquet",
-         f"{vol}/vehicle_stock_totals/2026-11-01_bb.parquet", False),
-        ("data/manifest.jsonl", f"{vol}/manifest/manifest.jsonl", True),
-    ]  # fmt: skip
+        (local("data/landing/traffic_counts/year=2026/aa.parquet"), f"{vol}/traffic_counts/2026_aa.parquet", False),
+        (
+            local("data/landing/vehicle_stock/stock_date=2026-11-01/bb.parquet"),
+            f"{vol}/vehicle_stock/2026-11-01_bb.parquet",
+            False,
+        ),
+        (
+            local("data/landing/vehicle_stock_totals/stock_date=2026-11-01/bb.parquet"),
+            f"{vol}/vehicle_stock_totals/2026-11-01_bb.parquet",
+            False,
+        ),
+        (local("data/manifest.jsonl"), f"{vol}/manifest/manifest.jsonl", True),
+    ]
+    assert all("\\" not in remote for _, remote, _ in plan.uploads)
 
 
 def test_copy_into_each_bronze_table_before_the_manifest_is_replaced():
