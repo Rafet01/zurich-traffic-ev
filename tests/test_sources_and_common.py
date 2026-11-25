@@ -40,6 +40,12 @@ def test_vehicle_stock_files_history_then_current():
     assert [u.rsplit("/", 1)[1] for u in select_vehicle_stock(files, manifest)] == ["BEST-20260101.txt", "best_ogd.txt"]
 
 
+def test_directory_links_absolute_and_encoded_hrefs():
+    html = '<a href="/ivzod/1323-Vorjahrsdaten/BEST-20190701.txt">a</a><a href="https://h/x/best%5Fogd.txt">b</a>'
+    assert vehicle_stock_files(html, html)[0][0] == "BEST-20190701.txt"
+    assert vehicle_stock_files(html, "")[-1][0] == "best_ogd.txt"
+
+
 def _loaded(uri, etag, last_modified, nbytes):
     return ManifestEntry("traffic_counts", "f.csv", uri, "aa", nbytes, None, None, ",", 1, 1, 0, "2026", "file name",
                          "p", None, last_modified, etag, "2026-11-24T06:00:00+00:00", "loaded")  # fmt: skip
@@ -60,3 +66,14 @@ def test_holidays():
     names = dict(zurich_holidays(2026))
     assert names[date(2026, 4, 3)] == "Karfreitag" and names[date(2026, 5, 14)] == "Auffahrt"
     assert len(names) == 10
+
+
+def test_live_check_header_rules():
+    from check_sources import check_stock_header, check_traffic_header
+    from make_fixtures import BEST_2019_07, OGD, TRAFFIC_HEADER
+
+    assert check_traffic_header(",".join(TRAFFIC_HEADER)) is None
+    assert "AnzFahrzeuge" in check_traffic_header(",".join(c for c in TRAFFIC_HEADER if c != "AnzFahrzeuge"))
+    assert check_stock_header("\t".join(BEST_2019_07)) == ("astra_best", None)
+    assert check_stock_header("\t".join(OGD)) == ("astra_ogd", None)
+    assert check_stock_header("Kanton\tAnzahl")[1] is not None

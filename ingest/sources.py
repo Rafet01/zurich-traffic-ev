@@ -18,6 +18,7 @@ import urllib.request
 from datetime import date
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -65,9 +66,10 @@ class _Links(HTMLParser):
 
 
 def directory_links(html: str) -> list[str]:
+    """File names linked from a directory listing; works for relative and absolute hrefs alike."""
     p = _Links()
     p.feed(html)
-    return p.hrefs
+    return [unquote(urlsplit(h).path).rstrip("/").rsplit("/", 1)[-1] for h in p.hrefs]
 
 
 def vehicle_stock_files(current_html: str, history_html: str) -> list[tuple[str, str]]:

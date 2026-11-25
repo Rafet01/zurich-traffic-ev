@@ -22,7 +22,9 @@ One dbt project, three engines, same results:
 | `databricks` | Databricks SQL warehouse, Unity Catalog, Delta tables | yes (Free Edition is enough) |
 
 CI builds every model on DuckDB and on Spark and then compares all gold tables row by row
-(`scripts/compare_engines.py`). That check already caught two engine differences the tests did not:
+(`scripts/compare_engines.py`), and runs the tests and the demo on Windows too. A weekly workflow
+(`sources.yml`, `python pipeline.py check-sources`) reads the first 64 KB of every live source file and checks
+that it is still listed where the ingest looks and that its header still matches a known layout. That check already caught two engine differences the tests did not:
 dbt-spark loads an empty seed cell as the string `'None'`, and a cross-database `datediff` needed parentheses.
 
 ## Questions

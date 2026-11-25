@@ -7,6 +7,7 @@
     python pipeline.py dashboard               Streamlit on http://localhost:8501
     python pipeline.py benchmark               time both ingests on large synthetic files
     python pipeline.py findings [--write]      the answers from the gold tables, as Markdown (--write: into README)
+    python pipeline.py check-sources           are the live files still listed, with headers the ingest knows?
 
 The ingest commands also take explicit files or URLs, e.g. `python pipeline.py ingest-vehicle-stock D:\\BEST.txt`,
 and `--dry-run` to only list what would be loaded. Paths are resolved from this file, not the working directory.
@@ -115,6 +116,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("demo")
     sub.add_parser("dashboard")
     sub.add_parser("benchmark").add_argument("--out", type=Path, default=Path(tempfile.gettempdir()) / "zte-bench")
+    sub.add_parser("check-sources")
     sub.add_parser("findings").add_argument("--write", action="store_true", help="replace the block in README.md")
     args = p.parse_args(argv)
 
@@ -131,6 +133,10 @@ def main(argv: list[str] | None = None) -> int:
         return demo()
     if args.command == "dashboard":
         return subprocess.run([sys.executable, "-m", "streamlit", "run", str(ROOT / "dashboard" / "app.py")]).returncode
+    if args.command == "check-sources":
+        import check_sources
+
+        return check_sources.main()
     if args.command == "findings":
         import findings
 
