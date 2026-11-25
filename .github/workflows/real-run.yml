@@ -1,0 +1,49 @@
+name: real-run
+# Full run on the real files: stream every traffic year and every vehicle snapshot from the portals (~33 GB,
+# one file at a time, only the landed Parquet is kept), build the warehouse, print the findings and keep the
+# landed data, manifest and gold tables as an artifact. Start it from the Actions tab (Run workflow).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/real-run.yml]
+
+concurrency: { group: real-run, cancel-in-progress: false }
+
+jobs:
+  real-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt
+      # A failing file is logged in the manifest; keep going so one bad file does not hide the others.
+      - run: python pipeline.py ingest-traffic || echo "::warning::some traffic files failed, see the log"
+      - run: python pipeline.py ingest-vehicle-stock || echo "::warning::some vehicle files failed, see the log"
+      - run: python pipeline.py build
+      - name: Findings
+        if: always()
+        run: python pipeline.py findings | tee findings.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Gold tables as Parquet
+        if: always()
+        run: |
+          mkdir -p gold
+          python - <<'PY'
+          import duckdb
+          con = duckdb.connect("data/warehouse.duckdb", read_only=True)
+          for (t,) in con.execute("select table_name from information_schema.tables where table_schema = 'gold'").fetchall():
+              con.execute(f"copy gold.{t} to 'gold/{t}.parquet' (format parquet)")
+              print(t)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-run-${{ github.run_id }}
+          path: |
+            data/manifest.jsonl
+            data/landing/
+            gold/
+            findings.md
+          retention-days: 90

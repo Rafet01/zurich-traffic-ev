@@ -157,6 +157,13 @@ day type with the rush-hour windows shaded, and a map of the busiest measuring p
 evening peak. Each view names the
 gold table it reads. CI runs the dashboard headlessly against the demo warehouse (`tests/test_dashboard.py`).
 
+### On GitHub Actions (real data, nothing to download at home)
+
+The `real-run` workflow (Actions tab, *Run workflow*) streams all 28 real files from the portals, builds the
+warehouse, writes the findings to the run summary and keeps the landed Parquet, the manifest and the gold tables
+as an artifact for 90 days. Unpack the artifact into the repository and `python pipeline.py build` rebuilds the
+same warehouse locally without streaming 33 GB again.
+
 ### With Airflow (Docker)
 
 ```bash
