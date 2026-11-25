@@ -30,6 +30,8 @@ select
     r.direction_group,
     r.lv95_east,
     r.lv95_north,
+    round({{ lv95_to_wgs84_lat('r.lv95_east', 'r.lv95_north') }}, 6) as latitude,
+    round({{ lv95_to_wgs84_lon('r.lv95_east', 'r.lv95_north') }}, 6) as longitude,
     r.detector_count,
     c.first_hour_local,
     c.last_hour_local,
