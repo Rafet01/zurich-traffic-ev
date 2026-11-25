@@ -47,6 +47,7 @@
 | `mart_traffic_monthly` | month |
 | `mart_ev_share_by_region` | region x stock date |
 | `mart_ev_growth_zug_vs_zurich` | region |
+| `mart_ev_share_by_canton` | canton x stock date (all 26 cantons, from the control totals) |
 | `mart_bev_share_new_cars_monthly` | region x month of first registration (latest snapshot only) |
 | `mart_traffic_vs_ev_monthly` | month (traffic months; car shares as of the month) |
 | `mart_data_quality` | loaded file |

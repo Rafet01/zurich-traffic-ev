@@ -29,7 +29,7 @@ dbt-spark loads an empty seed cell as the string `'None'`, and a cross-database 
 
 1. **Where and when** is rush-hour traffic in Zurich heaviest? (`gold.mart_peak_hours`, `gold.mart_busiest_sites_at_peak`)
 2. **Does the share of electric cars grow faster in Zug than in Zurich?** (`gold.mart_ev_share_by_region`,
-   `gold.mart_ev_growth_zug_vs_zurich`)
+   `gold.mart_ev_growth_zug_vs_zurich`, and all 26 cantons for context in `gold.mart_ev_share_by_canton`)
 3. How do the two fit together month by month? (`gold.mart_traffic_vs_ev_monthly`)
 
 ## Architecture
@@ -123,9 +123,10 @@ pip install -r requirements-dashboard.txt
 make dashboard     # Streamlit on http://localhost:8501, reads data/warehouse.duckdb read-only
 ```
 
-Three views, one per question: battery-electric share per region over the snapshots (with the growth in
-percentage points per year as headline numbers), the average day profile per day type with the rush-hour
-windows shaded, and a map of the busiest measuring points at the morning or evening peak. Each view names the
+One view per question: battery-electric share per region over the snapshots (with the growth in percentage
+points per year as headline numbers) and Zug and Zurich ranked among all cantons, the average day profile per
+day type with the rush-hour windows shaded, and a map of the busiest measuring points at the morning or
+evening peak. Each view names the
 gold table it reads. CI runs the dashboard headlessly against the demo warehouse (`tests/test_dashboard.py`).
 
 ### With Airflow (Docker)
@@ -190,4 +191,4 @@ the fixtures are invented.
 - [x] Three Airflow DAGs wired by assets; Docker image; CI that runs the DAGs inside the image
 - [ ] First full run on the real files (15 traffic years, 13 vehicle snapshots) and findings in this README
 - [x] Map of the busiest measuring points (LV95 -> WGS84) in a small Streamlit dashboard
-- [ ] Optional: canton-level comparison with all 26 cantons (the control totals already contain them)
+- [x] Canton-level comparison with all 26 cantons, from the control totals, reconciled with the national total

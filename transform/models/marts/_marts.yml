@@ -57,6 +57,16 @@ models:
       - name: region_code
         data_tests: [unique, not_null]
 
+  - name: mart_ev_share_by_canton
+    description: >
+      Battery-electric share of passenger cars for all 26 cantons per snapshot, from the control totals:
+      rank among the cantons, percentage points above the national share, growth per year since the first snapshot.
+    columns:
+      - name: canton
+        data_tests: [not_null]
+      - name: rank_in_snapshot
+        data_tests: [not_null]
+
   - name: mart_bev_share_new_cars_monthly
     description: Battery-electric share by month of first registration, from the latest snapshot (survivors only).
 

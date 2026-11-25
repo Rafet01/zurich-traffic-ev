@@ -41,6 +41,7 @@ def test_dashboard_renders_every_section(app):
         "When is rush hour in Zurich?",
         "Where is it busiest?",
     ]
+    assert [h.value for h in app.subheader] == ["Zug and Zurich among all cantons"]
     regions = [m.label for m in app.metric]
     assert "Canton of Zug" in regions and "Canton of Zurich" in regions
 

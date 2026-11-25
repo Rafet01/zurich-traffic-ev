@@ -31,6 +31,11 @@ QUERIES = {
                first_share, last_share, share_growth_pp_per_year, battery_electric_cagr, rank_by_pp_per_year
         from gold.mart_ev_growth_zug_vs_zurich
         order by rank_by_pp_per_year""",
+    "ev_by_canton": """
+        select canton, stock_date, cars, battery_electric, share_battery_electric, pp_above_national,
+               rank_in_snapshot, cantons_in_snapshot, growth_pp_per_year_since_first
+        from gold.mart_ev_share_by_canton
+        order by stock_date, rank_in_snapshot""",
     "peak_hours": """
         select direction_group, day_type, hour_of_day, days_observed, avg_vehicles_per_point,
                share_of_daily_traffic, busiest_rank
@@ -55,6 +60,7 @@ PALETTE = {
     "dark": ["#338ced", "#e76624", "#00a888", "#d28e05"],
 }
 REGION_ORDER = ["kanton_zg", "kanton_zh", "stadt_zh", "schweiz"]
+NEUTRAL = {"light": "#b5b5b5", "dark": "#5a5a5a"}  # cantons that are context, not focus
 DAY_TYPE_ORDER = ["weekday", "saturday", "sunday", "holiday"]
 DAY_TYPE_LABEL = {"weekday": "Working day", "saturday": "Saturday", "sunday": "Sunday", "holiday": "Public holiday"}
 DIRECTION_LABEL = {"inbound": "Into the city", "outbound": "Out of the city", "named": "Other (named direction)"}
@@ -134,6 +140,53 @@ def ev_section(path: str) -> None:
         "Battery-electric only (fuel code E), the one definition that is identical in every ASTRA file. "
         "Cars are counted where they are registered. Source: `gold.mart_ev_share_by_region`, "
         "`gold.mart_ev_growth_zug_vs_zurich`."
+    )
+
+
+def canton_section(path: str) -> None:
+    cantons = load("ev_by_canton", path)
+    if cantons.empty:
+        return
+    st.subheader("Zug and Zurich among all cantons")
+    dates = sorted(cantons.stock_date.unique(), reverse=True)
+    picked = st.selectbox("Snapshot", dates, format_func=lambda d: f"{pd.Timestamp(d):%B %Y}", key="canton_snapshot")
+    data = cantons[cantons.stock_date == picked].assign(
+        group=lambda d: d.canton.map({"ZG": "Canton of Zug", "ZH": "Canton of Zurich"}).fillna("Other cantons")
+    )
+    mode = theme()
+    colour = alt.Color(
+        "group:N",
+        scale=alt.Scale(
+            domain=["Canton of Zug", "Canton of Zurich", "Other cantons"],
+            range=[PALETTE[mode][0], PALETTE[mode][1], NEUTRAL[mode]],
+        ),
+        legend=alt.Legend(title=None, orient="top", labelLimit=0),
+    )
+    bars = (
+        alt.Chart(data)
+        .mark_bar(cornerRadiusEnd=4)
+        .encode(
+            y=alt.Y("canton:N", sort="-x", title=None, scale=alt.Scale(paddingInner=0.25)),
+            x=alt.X(
+                "share_battery_electric:Q", title="Battery-electric share of passenger cars", axis=alt.Axis(format="%")
+            ),
+            color=colour,
+            tooltip=[
+                alt.Tooltip("canton:N", title="Canton"),
+                alt.Tooltip("share_battery_electric:Q", title="BEV share", format=".1%"),
+                alt.Tooltip("rank_in_snapshot:Q", title="Rank"),
+                alt.Tooltip("pp_above_national:Q", title="pp vs Switzerland", format="+.2f"),
+                alt.Tooltip(
+                    "growth_pp_per_year_since_first:Q", title="pp per year since first snapshot", format="+.2f"
+                ),
+                alt.Tooltip("cars:Q", title="Cars", format=","),
+            ],
+        )
+    )
+    st.altair_chart(bars, width="stretch", height=24 * len(data) + 130)
+    st.caption(
+        "All passenger cars of every canton, counted in the same pass as the ingest (control totals), "
+        "so no postcode caveats here. Source: `gold.mart_ev_share_by_canton`."
     )
 
 
@@ -260,6 +313,7 @@ def main() -> None:
         st.stop()
     st.caption(f"Gold tables from `{WAREHOUSE.name}`. Run `make demo` first to see it on synthetic data.")
     ev_section(path)
+    canton_section(path)
     peak_section(path)
     sites_section(path)
     quality_section(path)
